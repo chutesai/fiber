@@ -79,17 +79,20 @@ class Metagraph:
             with open(fcst.SAVE_NODES_FILEPATH, "w") as f:
                 json.dump(nodes_as_dict, f)
         else:
-            logger.warning(f"Loading old nodes is not enabled, so I wont save the {len(self.nodes)} nodes I have")
+            logger.warning(f"Loading old nodes is not enabled, so I won't save the {len(self.nodes)} nodes I have")
 
     def load_nodes(self) -> None:
         logger.info(f"Loading nodes from {fcst.SAVE_NODES_FILEPATH}")
         try:
             with open(fcst.SAVE_NODES_FILEPATH, "r") as f:
                 raw_nodes: dict[str, dict] = json.load(f)
+            self.nodes = {hotkey: models.Node(**node) for hotkey, node in raw_nodes.items()}
         except FileNotFoundError:
             return
+        except Exception as e:
+            logger.error(f"Error loading nodes from {fcst.SAVE_NODES_FILEPATH}: {e}  - will resync manually")
+            return
 
-        self.nodes = {hotkey: models.Node(**node) for hotkey, node in raw_nodes.items()}
 
     def shutdown(self) -> None:
         self.stop_event.set()

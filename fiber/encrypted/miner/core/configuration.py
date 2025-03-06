@@ -41,7 +41,7 @@ def factory_config() -> Config:
     subtensor_network = os.getenv("SUBTENSOR_NETWORK")
     subtensor_address = os.getenv("SUBTENSOR_ADDRESS")
     load_old_nodes = bool(os.getenv("LOAD_OLD_NODES", True))
-    min_stake_threshold = int(os.getenv("MIN_STAKE_THRESHOLD", 10))
+    min_stake_threshold = int(os.getenv("MIN_STAKE_THRESHOLD", 1000))
     refresh_nodes = os.getenv("REFRESH_NODES", "true").lower() == "true"
 
     assert netuid is not None, "Must set NETUID env var please!"

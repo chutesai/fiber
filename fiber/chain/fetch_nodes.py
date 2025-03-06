@@ -1,4 +1,3 @@
-import netaddr
 from async_substrate_interface import SubstrateInterface
 from scalecodec.utils.ss58 import ss58_encode
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -7,6 +6,7 @@ from fiber import constants as fcst
 from fiber.chain import chain_utils as chain_utils
 from fiber.chain import models
 from fiber.chain.interface import get_substrate
+from fiber.chain.models import Node
 from fiber.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -18,60 +18,46 @@ def _ss58_encode(address: list[int] | list[list[int]], ss58_format: int = fcst.S
     return ss58_encode(bytes(address).hex(), ss58_format)
 
 
-def _normalise_u16_float(x: int) -> float:
-    return float(x) / float(fcst.U16_MAX)
-
-
-def _rao_to_tao(rao: float | int) -> float:
-    return int(rao) / 10**9
-
-
-def _get_node_from_neuron_info(neuron_info_decoded: dict) -> models.Node:
-    neuron_info_copy = neuron_info_decoded.copy()
-    stake_dict = {_ss58_encode(coldkey, fcst.SS58_FORMAT): _rao_to_tao(stake) for coldkey, stake in neuron_info_copy["stake"]}
-    return models.Node(
-        hotkey=_ss58_encode(neuron_info_copy["hotkey"], fcst.SS58_FORMAT),
-        coldkey=_ss58_encode(neuron_info_copy["coldkey"], fcst.SS58_FORMAT),
-        node_id=neuron_info_copy["uid"],
-        netuid=neuron_info_copy["netuid"],
-        stake=sum(stake_dict.values()),
-        incentive=neuron_info_copy["incentive"],
-        trust=_normalise_u16_float(neuron_info_copy["trust"]),
-        vtrust=_normalise_u16_float(neuron_info_copy["validator_trust"]),
-        last_updated=neuron_info_copy["last_update"],
-        ip=str(netaddr.IPAddress(int(neuron_info_copy["axon_info"]["ip"]))),
-        ip_type=neuron_info_copy["axon_info"]["ip_type"],
-        port=neuron_info_copy["axon_info"]["port"],
-        protocol=neuron_info_copy["axon_info"]["protocol"],
-    )
-
-
-def _get_nodes_from_neuron_infos(neuron_infos: list[dict]) -> list[models.Node]:
-    nodes = []
-    for decoded_neuron in neuron_infos:
-        node = _get_node_from_neuron_info(decoded_neuron)
-        if node is not None:
-            nodes.append(node)
-    return nodes
-
-
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=4))
 def _get_nodes_for_uid(substrate: SubstrateInterface, netuid: int, block: int | None = None):
-
     if block is not None:
         block_hash = substrate.get_block_hash(block)
     else:
         block_hash = None
 
-    with substrate as si:
-        neuron_infos = si.runtime_call(
-            api="NeuronInfoRuntimeApi",
-            method="get_neurons_lite",
-            params=[netuid],
-            block_hash=block_hash,
-        ).value
+    response = substrate.runtime_call(
+        api="SubnetInfoRuntimeApi",
+        method="get_metagraph",
+        params=[netuid],
+        block_hash=block_hash,
+    )
+    metagraph = response.value
 
-    return _get_nodes_from_neuron_infos(neuron_infos)
+    nodes = []
+
+    for uid in range(len(metagraph["hotkeys"])):
+        axon = metagraph["axons"][uid]
+
+        node = Node(
+            hotkey=_ss58_encode(metagraph["hotkeys"][uid], fcst.SS58_FORMAT),
+            coldkey=_ss58_encode(metagraph["coldkeys"][uid], fcst.SS58_FORMAT),
+            node_id=uid,
+            incentive=metagraph["incentives"][uid],
+            netuid=metagraph["netuid"],
+            alpha_stake=metagraph["alpha_stake"][uid] * 10**-9,
+            tao_stake=metagraph["tao_stake"][uid] * 10**-9,
+            stake=metagraph["total_stake"][uid] * 10**-9,
+            trust=metagraph["trust"][uid],
+            vtrust=metagraph["consensus"][uid],
+            last_updated=float(metagraph["last_update"][uid]),
+            ip=str(axon["ip"]),
+            ip_type=axon["ip_type"],
+            port=axon["port"],
+            protocol=axon["protocol"],
+        )
+        nodes.append(node)
+
+    return nodes
 
 
 def get_nodes_for_netuid(substrate: SubstrateInterface, netuid: int, block: int | None = None) -> list[models.Node]:
