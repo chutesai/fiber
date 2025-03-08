@@ -116,7 +116,7 @@ class TestEncryption(unittest.IsolatedAsyncioTestCase):
                 config=mock_config,
             )
 
-        self.assertEqual(context.exception.status_code, 429)
+        self.assertEqual(context.exception.status_code, 403)
         self.assertEqual(context.exception.detail, "No symmetric key found for that hotkey and uuid")
 
         mock_encryption_keys_handler.get_symmetric_key.assert_called_once_with("test-hotkey", "test-uuid")

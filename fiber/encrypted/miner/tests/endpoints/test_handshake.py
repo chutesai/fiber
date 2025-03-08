@@ -104,7 +104,7 @@ class TestHandshake(unittest.TestCase):
 
         response = self.client.post("/exchange_symmetric_key", json=payload.model_dump())
 
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 403)
         self.assertIn("invalid signature", response.json()["detail"])
 
     @patch("fiber.src.miner.security.signatures.verify_signature")
@@ -126,7 +126,7 @@ class TestHandshake(unittest.TestCase):
 
         response = self.client.post("/exchange_symmetric_key", json=payload.model_dump())
 
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 403)
         self.assertIn("nonce", response.json()["detail"])
 
     def test_factory_router(self):
