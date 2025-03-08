@@ -65,7 +65,7 @@ def decrypt_general_payload(
     logger.debug(f"Decrypting payload from validator {validator_hotkey} for miner {miner_hotkey}")
     symmetric_key_info = config.encryption_keys_handler.get_symmetric_key(validator_hotkey, symmetric_key_uuid)
     if not symmetric_key_info:
-        raise HTTPException(status_code=400, detail="No symmetric key found for that hotkey and uuid")
+        raise HTTPException(status_code=429, detail="No symmetric key found for that hotkey and uuid")
 
     decrypted_data = symmetric_key_info.fernet.decrypt(encrypted_payload)
 
