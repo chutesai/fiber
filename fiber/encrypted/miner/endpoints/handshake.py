@@ -41,7 +41,15 @@ async def exchange_symmetric_key(
 
 def factory_router() -> APIRouter:
     router = APIRouter(tags=["Handshake"])
-    router.add_api_route("/public-encryption-key", get_public_key, methods=["GET"])
+    router.add_api_route(
+        "/public-encryption-key", 
+        get_public_key, 
+        methods=["GET"],
+        dependencies=[
+            Depends(blacklist_low_stake),
+            Depends(verify_request),
+        ],
+    )
     router.add_api_route(
         "/exchange-symmetric-key",
         exchange_symmetric_key,
