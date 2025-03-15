@@ -46,7 +46,6 @@ def factory_router() -> APIRouter:
         get_public_key, 
         methods=["GET"],
         dependencies=[
-            Depends(blacklist_low_stake),
             Depends(verify_request),
         ],
     )
