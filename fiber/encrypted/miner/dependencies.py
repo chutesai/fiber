@@ -30,7 +30,7 @@ async def verify_get_request(
         )
 
     if not signatures.verify_signature(
-        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid, validator_hotkey),
+        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid),
         signer_ss58_address=validator_hotkey,
         signature=signature,
     ):
@@ -56,7 +56,7 @@ async def verify_request(
         )
 
     if not signatures.verify_signature(
-        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid, validator_hotkey),
+        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid),
         signer_ss58_address=validator_hotkey,
         signature=signature,
     ):

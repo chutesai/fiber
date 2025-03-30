@@ -29,7 +29,7 @@ async def verify_get_request(
         )
 
     message = utils.construct_header_signing_message(
-        nonce=nonce, miner_hotkey=miner_hotkey, validator_hotkey=validator_hotkey, payload_hash=None
+        nonce=nonce, miner_hotkey=miner_hotkey, payload_hash=None
     )
     if not signatures.verify_signature(
         message=message,
@@ -67,7 +67,7 @@ async def verify_request(
     body = await request.body()  # Will this cause issues when it comes to getting the body?
     payload_hash = signatures.get_hash(body)
     message = utils.construct_header_signing_message(
-        nonce=nonce, miner_hotkey=miner_hotkey, validator_hotkey=validator_hotkey, payload_hash=payload_hash
+        nonce=nonce, miner_hotkey=miner_hotkey, payload_hash=payload_hash
     )
     if not signatures.verify_signature(
         message=message,

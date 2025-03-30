@@ -26,7 +26,6 @@ def _get_headers(
         nonce=nonce,
         miner_hotkey=miner_ss58_address,
         symmetric_key_uuid=symmetric_key_uuid,
-        validator_hotkey=validator_ss58_address,
     )
     signature = signatures.sign_message(keypair, message)
     return {

@@ -26,7 +26,6 @@ def _get_headers(
     message = utils.construct_header_signing_message(
         nonce=nonce,
         miner_hotkey=miner_ss58_address,
-        validator_hotkey=validator_ss58_address,
         payload_hash=payload_hash,
     )
     signature = signatures.sign_message(keypair, message)
