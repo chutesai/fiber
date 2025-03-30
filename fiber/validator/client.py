@@ -20,14 +20,9 @@ def _get_headers(
     payload_str: bytes | None = None,
 ) -> dict[str, str]:
     nonce = generate_nonce()
-    # Calculate payload hash if payload is provided, otherwise None
     payload_hash = signatures.get_hash(payload_str) if payload_str is not None else None
 
-    message = utils.construct_header_signing_message(
-        nonce=nonce,
-        miner_hotkey=miner_ss58_address,
-        payload_hash=payload_hash,
-    )
+    message = utils.construct_header_signing_message(nonce=nonce, miner_hotkey=miner_ss58_address, payload_hash=payload_hash)
     signature = signatures.sign_message(keypair, message)
     # To verify this:
     # Get the payload hash, get the signing message, check the hash matches the signature
