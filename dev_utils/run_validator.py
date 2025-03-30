@@ -37,6 +37,17 @@ async def main():
     resp.raise_for_status()
     logger.info(f"Example request sent! Response: {resp.text}")
 
+    resp = await validator.make_non_streamed_get(
+        httpx_client=httpx_client,
+        server_address=miner_address,
+        validator_ss58_address=keypair.ss58_address,
+        miner_ss58_address=miner_hotkey_ss58_address,
+        keypair=keypair,
+        endpoint="/example-subnet-get",
+    )
+    resp.raise_for_status()
+    logger.info(f"Example get request sent! Response: {resp.text}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

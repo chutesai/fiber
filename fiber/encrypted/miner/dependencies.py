@@ -14,6 +14,32 @@ def get_config() -> Config:
     return configuration.factory_config()
 
 
+async def verify_get_request(
+    validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
+    signature: str = Header(..., alias=cst.SIGNATURE),
+    miner_hotkey: str = Header(..., alias=cst.MINER_HOTKEY),
+    nonce: str = Header(..., alias=cst.NONCE),
+    symmetric_key_uuid: str = Header(..., alias=cst.SYMMETRIC_KEY_UUID),
+    config: Config = Depends(get_config),
+):
+    if not config.encryption_keys_handler.nonce_manager.nonce_is_valid(nonce):
+        logger.debug("Nonce is not valid!")
+        raise HTTPException(
+            status_code=401,
+            detail="Oi, that nonce is not valid!",
+        )
+
+    if not signatures.verify_signature(
+        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid, validator_hotkey),
+        signer_ss58_address=validator_hotkey,
+        signature=signature,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Oi, invalid signature, you're not who you said you were!",
+        )
+
+
 async def verify_request(
     validator_hotkey: str = Header(..., alias=cst.VALIDATOR_HOTKEY),
     signature: str = Header(..., alias=cst.SIGNATURE),
@@ -30,7 +56,7 @@ async def verify_request(
         )
 
     if not signatures.verify_signature(
-        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid),
+        message=utils.construct_header_signing_message(nonce, miner_hotkey, symmetric_key_uuid, validator_hotkey),
         signer_ss58_address=validator_hotkey,
         signature=signature,
     ):

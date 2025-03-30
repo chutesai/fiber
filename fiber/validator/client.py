@@ -13,22 +13,22 @@ from fiber.validator.generate_nonce import generate_nonce
 logger = get_logger(__name__)
 
 
-def _get_headers(validator_ss58_address: str) -> dict[str, str]:
-    return {
-        "Content-Type": "application/json",
-        cst.VALIDATOR_HOTKEY: validator_ss58_address,
-    }
-
-
-def get_headers_with_nonce(
-    payload_str: bytes,
+def _get_headers(
     validator_ss58_address: str,
     miner_ss58_address: str,
     keypair: Keypair,
+    payload_str: bytes | None = None,
 ) -> dict[str, str]:
     nonce = generate_nonce()
-    payload_hash = signatures.get_hash(payload_str)
-    message = utils.construct_header_signing_message(nonce=nonce, miner_hotkey=miner_ss58_address, payload_hash=payload_hash)
+    # Calculate payload hash if payload is provided, otherwise None
+    payload_hash = signatures.get_hash(payload_str) if payload_str is not None else None
+
+    message = utils.construct_header_signing_message(
+        nonce=nonce,
+        miner_hotkey=miner_ss58_address,
+        validator_hotkey=validator_ss58_address,
+        payload_hash=payload_hash,
+    )
     signature = signatures.sign_message(keypair, message)
     # To verify this:
     # Get the payload hash, get the signing message, check the hash matches the signature
@@ -50,8 +50,8 @@ def construct_server_address(
     Currently just supports http4.
     """
     if node.ip == "0.0.0.1":
-        # CHAIN DOES NOT ALLOW 127.0.0.1 TO BE POSTED. IS THIS
-        # A REASONABLE WORKAROUND FOR LOCAL DEV?
+        # CHAIN DOES NOT ALLOW 127.0.0.1 TO BE POSTED.
+        # THIS IS A WORKAROUND FOR LOCAL DEV.
         if replace_with_docker_localhost:
             return f"http://host.docker.internal:{node.port}"
         elif replace_with_localhost:
@@ -63,11 +63,13 @@ async def make_non_streamed_get(
     httpx_client: httpx.AsyncClient,
     server_address: str,
     validator_ss58_address: str,
+    miner_ss58_address: str,
+    keypair: Keypair,
     endpoint: str,
     timeout: float = 10,
 ):
-    headers = _get_headers(validator_ss58_address)
-    logger.debug(f"headers: {headers}")
+    headers = _get_headers(validator_ss58_address, miner_ss58_address, keypair)
+
     response = await httpx_client.get(
         timeout=timeout,
         headers=headers,
@@ -87,10 +89,10 @@ async def make_non_streamed_post(
     timeout: float = 10,
 ) -> httpx.Response:
     content = json.dumps(payload).encode()
-    headers = get_headers_with_nonce(content, validator_ss58_address, miner_ss58_address, keypair)
+    headers = _get_headers(validator_ss58_address, miner_ss58_address, keypair, content)
 
     response = await httpx_client.post(
-        json=payload,  # NOTE: can this be content?
+        json=payload,
         timeout=timeout,
         headers=headers,
         url=server_address + endpoint,
@@ -109,12 +111,12 @@ async def make_streamed_post(
     timeout: float = 10,
 ) -> AsyncGenerator[bytes, None]:
     content = json.dumps(payload).encode()
-    headers = get_headers_with_nonce(content, validator_ss58_address, miner_ss58_address, keypair)
+    headers = _get_headers(validator_ss58_address, miner_ss58_address, keypair, content)
 
     async with httpx_client.stream(
         method="POST",
         url=server_address + endpoint,
-        content=content,  # NOTE: can this be content?
+        content=content,
         headers=headers,
         timeout=timeout,
     ) as response:

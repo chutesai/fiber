@@ -9,7 +9,7 @@ from substrateinterface import Keypair
 
 from fiber import constants as cst
 from fiber.encrypted.miner.core.models import encryption
-from fiber.encrypted.validator.client import get_headers_with_nonce
+from fiber.encrypted.validator.client import _get_headers
 from fiber.encrypted.validator.security.encryption import public_key_encrypt
 from fiber.logging_utils import get_logger
 
@@ -64,7 +64,7 @@ async def send_symmetric_key_to_server(
     miner_hotkey_ss58_address: str,
     timeout: int = 3,
 ) -> bool:
-    headers = get_headers_with_nonce(symmetric_key_uuid, keypair.ss58_address, miner_hotkey_ss58_address, keypair)
+    headers = _get_headers(symmetric_key_uuid, keypair.ss58_address, miner_hotkey_ss58_address, keypair)
     payload = {
         "encrypted_symmetric_key": base64.b64encode(public_key_encrypt(public_key_encryption_key, symmetric_key)).decode("utf-8"),
     }
