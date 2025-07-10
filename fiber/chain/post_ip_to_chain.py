@@ -1,5 +1,6 @@
-import netaddr
 import socket
+
+import netaddr
 from substrateinterface import Keypair, SubstrateInterface
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -11,13 +12,13 @@ logger = get_logger(__name__)
 def resolve_hostname_to_ip(hostname: str) -> str:
     """
     Resolve a hostname to an IP address.
-    
+
     Args:
         hostname: The hostname to resolve (e.g., 'example.com')
-        
+
     Returns:
         The resolved IP address as a string
-        
+
     Raises:
         socket.gaierror: If the hostname cannot be resolved
     """
@@ -56,7 +57,7 @@ def post_node_ip_to_chain(
 ) -> bool:
     # Resolve hostname to IP if needed
     resolved_ip = resolve_hostname_to_ip(external_ip)
-    
+
     params = {
         "version": 1,  # I don't know why we even post this, can we just post 1?
         "ip": ip_to_int(resolved_ip),
