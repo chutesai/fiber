@@ -26,7 +26,7 @@ def main():
     parser.add_argument("--wallet.name", type=str, required=False, help="Wallet name", default="default")
     parser.add_argument("--wallet.hotkey", type=str, required=False, help="Hotkey name", default="default")
     parser.add_argument("--netuid", type=int, required=True, help="Network UID")
-    parser.add_argument("--external_ip", required=True, help="External IP address")
+    parser.add_argument("--external_ip", required=True, help="External IP address or hostname (e.g., '192.168.1.100' or 'example.com')")
     parser.add_argument("--external_port", type=int, required=True, help="External port")
 
     args = parser.parse_args()
