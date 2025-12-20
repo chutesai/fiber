@@ -47,7 +47,7 @@ def _get_nodes_for_uid(substrate: SubstrateInterface, netuid: int, block: int | 
             alpha_stake=metagraph["alpha_stake"][uid] * 10**-9,
             tao_stake=metagraph["tao_stake"][uid] * 10**-9,
             stake=metagraph["total_stake"][uid] * 10**-9,
-            trust=metagraph["trust"][uid],
+            trust=0,  # XXX metagraph["trust"][uid], removed https://github.com/opentensor/subtensor/pull/2158
             vtrust=metagraph["consensus"][uid],
             last_updated=float(metagraph["last_update"][uid]),
             ip=str(axon["ip"]),
